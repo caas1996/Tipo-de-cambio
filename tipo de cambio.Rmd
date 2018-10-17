@@ -1,0 +1,61 @@
+---
+title: "Tipo de cambio"
+author: "CAAS"
+date: "16 de octubre de 2018"
+output: html_document
+---
+
+```{r echo=FALSE , results='hide', message=FALSE , warning=FALSE}
+
+librerias <- c("tidyr","knitr","kableExtra","plotly","ggplot2","readxl","haven","stringr","dplyr")
+
+lapply(librerias, library, character.only = T)
+
+```
+
+```{r echo=FALSE , results='hide', message=FALSE , warning=FALSE}
+
+token <- "c6e88275-b2fb-66c9-befd-30e459b32ca8"
+
+#Inflación en USA
+
+inf_eu <- read_excel("inf_EU.xls", range = "A11:B1280")
+
+names(inf_eu) <- c("Fecha", "inf_usa")
+
+inf_eu$Fecha <- as.Date(inf_eu$Fecha)
+
+inf_eu$Año <- as.numeric(substr(inf_eu$Fecha, 1, 4))
+
+inf_eu$mes <- substr(inf_eu$Fecha, 6, 7)
+
+inf_eu2 <- inf_eu[]
+
+#Inflación en MX
+
+inf_mx <- read_excel("inf_mx.xlsx", range = "A18:B615")
+
+names(inf_mx) <- c("Fecha", "inf_mx")
+
+inf_mx$Fecha <- as.Date(inf_mx$Fecha)
+
+inf_mx$Año <- as.numeric(substr(inf_mx$Fecha, 1, 4))
+
+inf_mx$mes <- substr(inf_mx$Fecha, 6, 7)
+
+#Saldo en cuenta corriente
+
+cc_mx <- read_excel("cc_mx.xlsx", range = "A18:B172")
+
+names(cc_mx) <- c("Fecha", "cc_mx")
+
+cc_mx$Fecha <- as.Date(cc_mx$Fecha)
+
+cc_mx$Año <- as.numeric(substr(cc_mx$Fecha, 1, 4))
+
+cc_mx$mes <- substr(cc_mx$Fecha, 6, 7)
+
+
+
+```
+ 

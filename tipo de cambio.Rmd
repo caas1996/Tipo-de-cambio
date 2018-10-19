@@ -11,6 +11,8 @@ librerias <- c("tidyr","knitr","kableExtra","plotly","ggplot2","readxl","haven",
 
 lapply(librerias, library, character.only = T)
 
+token <- "c6e88275-b2fb-66c9-befd-30e459b32ca8"
+
 ```
 
 ```{r echo=FALSE , results='hide', message=FALSE , warning=FALSE}
@@ -21,21 +23,27 @@ token <- "c6e88275-b2fb-66c9-befd-30e459b32ca8"
 
 inf_eu <- read_excel("inf_EU.xls", range = "A11:B1280")
 
-names(inf_eu) <- c("Fecha", "inf_usa")
+names(inf_eu) <- c("Fecha", "inf_usa_b84")
 
 inf_eu$Fecha <- as.Date(inf_eu$Fecha)
 
 inf_eu$Año <- as.numeric(substr(inf_eu$Fecha, 1, 4))
 
+deflactor <- inf_eu[(inf_eu$Año >= 1982 & inf_eu$Año <=1984), "inf_usa_b84"]
+
+deflactor <- mean(deflactor$inf_usa_b84)
+
 inf_eu$mes <- substr(inf_eu$Fecha, 6, 7)
 
-inf_eu2 <- inf_eu[]
+inf_eu$inf_usa_b <- deflactor*inf_eu$inf_usa_b84/100
+
+inf_eu2 <- subset(inf_eu, Año >= 1990)
 
 #Inflación en MX
 
 inf_mx <- read_excel("inf_mx.xlsx", range = "A18:B615")
 
-names(inf_mx) <- c("Fecha", "inf_mx")
+names(inf_mx) <- c("Fecha", "inf_mx_b")
 
 inf_mx$Fecha <- as.Date(inf_mx$Fecha)
 
@@ -43,19 +51,66 @@ inf_mx$Año <- as.numeric(substr(inf_mx$Fecha, 1, 4))
 
 inf_mx$mes <- substr(inf_mx$Fecha, 6, 7)
 
+inf_mx2 <- subset(inf_mx, Año >= 1990)
+
 #Saldo en cuenta corriente
 
 cc_mx <- read_excel("cc_mx.xlsx", range = "A18:B172")
 
-names(cc_mx) <- c("Fecha", "cc_mx")
+names(cc_mx) <- c("Fecha", "c_cor_mx")
 
 cc_mx$Fecha <- as.Date(cc_mx$Fecha)
 
 cc_mx$Año <- as.numeric(substr(cc_mx$Fecha, 1, 4))
 
-cc_mx$mes <- substr(cc_mx$Fecha, 6, 7)
+cc_mx2 <- subset(cc_mx, Año >= 1990)
 
+base_yr <- (subset(cc_mx2, (c_cor_mx)^2 == min((c_cor_mx)^2)))
+
+base_yr$Mes <- as.numeric(substr(base_yr$Fecha, 6, 7))
+
+base_yr$trim <- NA
+
+base_yr[(base_yr[,4] <= 3),5]                     <- 1 
+base_yr[(base_yr[,4] >  3 & base_yr[,4] <=  6),5] <- 2 
+base_yr[(base_yr[,4] >  6 & base_yr[,4] <=  9),5] <- 3 
+base_yr[(base_yr[,4] >  9 & base_yr[,4] <= 12),5] <- 4 
+
+# Unificando las bases
+
+base <- merge(inf_eu2[,c(1,5)], inf_mx2[,1:2], by = "Fecha")
+
+base$Año <- as.numeric(substr(base$Fecha, 1, 4))
+
+base$Mes <- as.numeric(substr(base$Fecha, 6, 7))
+
+base$trim <- NA
+
+base[(base[,5] <= 3),6]                  <- 1 
+base[(base[,5]  > 3 & base[,5] <= 6) ,6] <- 2 
+base[(base[,5]  > 6 & base[,5] <= 9) ,6] <- 3 
+base[(base[,5]  > 9 & base[,5] <= 12),6] <- 4 
+
+deflactor <- mean(base[(base$Año == base_yr$Año & base$trim == base_yr$trim), "inf_mx_b"])
+
+base_yr[,c("Año", "trim")]
+
+base$inf_mx_b06_2 <- (base$inf_mx_b/deflactor)*100
+
+```
+
+```{r echo=FALSE ,message=FALSE , warning=FALSE}
+
+cuenta_cor <- ggplot(cc_mx2, aes(x = Fecha, y = c_cor_mx, color = Año)) + 
+                geom_bar(stat = "identity") + theme_bw() + 
+                scale_colour_gradientn(colours =  RColorBrewer::brewer.pal(length(cc_mx2$Año), "Spectral")) + 
+                ggtitle("Saldo trimestral de la cuenta corriente de México (1990-2018)") 
+  
+ggplotly(cuenta_cor) %>%
+  layout(xaxis = list(title = "Año"),
+         yaxis = list(title = "Millones de dólares corriente"))
 
 
 ```
+
  
